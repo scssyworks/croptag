@@ -1,0 +1,19 @@
+{
+  "name": "croptag",
+  "version": "0.0.1",
+  "description": "Image tagging and cropping utility",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scssyworks/croptag.git"
+  },
+  "author": "Sachin Singh <contactsachinsingh@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/scssyworks/croptag/issues"
+  },
+  "homepage": "https://github.com/scssyworks/croptag#readme"
+}
