@@ -7,5 +7,5 @@ This utility was created by me during early days of my career when I was trying 
 # Install
 
 ```sh
-npm install --save croptag
+npm i croptag
 ```

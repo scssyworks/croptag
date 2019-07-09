@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Image cropping</title>
+    <style>
+        .img-wrapper {
+            width: 800px;
+        }
+        .img-wrapper img {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="img-wrapper">
+        <img src="https://cdn.hasselblad.com/samples/B0000835.jpg" alt="Sample Image" id="sampleImg" />
+    </div>
+    <script src="dist/index.js"></script>
+    <script>
+        new CropTag({
+            image: document.getElementById('sampleImg')
+        });
+    </script>
+</body>
+</html>
