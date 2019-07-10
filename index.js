@@ -1,3 +1,13 @@
+import { CROPTAG_READY, CROPTAG_ERROR, CROPTAG_WRAP, CROPTAG_MASK, MOUSE_DOWN, CROPTAG_TAG, CROPTAG_DOT, CROPTAG_EDGE, MOUSE_MOVE, MOUSE_UP } from './lib/constants';
+
+/**
+ * Creates and return a DOM element
+ * @private
+ * @param {string} el Element type
+ * @param {object} attributes Element attributes
+ * @param {string} html HTML string
+ * @returns {Node}
+ */
 function _createElement(el, attributes = {}, html = '') {
     const tag = document.createElement(el);
     Object.keys(attributes).forEach((attr) => {
@@ -9,31 +19,40 @@ function _createElement(el, attributes = {}, html = '') {
     return tag;
 }
 
+/**
+ * Wraps images for drawing tags
+ * @private
+ * @param {Node[]} imageList Element list
+ */
 function _wrapAndMask(imageList) {
     imageList.forEach(img => {
         const wrapper = _createElement('div', {
             style: 'position: relative; width: 100%; height: 100%;',
-            class: 'crop-tag-wrap'
+            class: CROPTAG_WRAP
         });
         img.parentNode.insertBefore(wrapper, img);
         wrapper.appendChild(img);
         wrapper.appendChild(_createElement('div', {
             style: 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;',
-            class: 'crop-tag-mask'
+            class: CROPTAG_MASK
         }));
     });
 }
 
+/**
+ * Returns a promise to ensure the tags are created only when image is available
+ * @param {Node[]} imageList Image list
+ */
 function _resolveImageData(imageList) {
-    const imgData = [];
     return Promise.all(imageList.map(img => new Promise((resolve) => {
         if (img.complete) {
             const hasErrors = img.naturalWidth === 0 || img.naturalHeight === 0;
             if (hasErrors) {
-                img.classList.add('crop-tag-error');
+                img.classList.add(CROPTAG_ERROR);
             }
             resolve();
-            imgData.push({
+            this.originalImages.push({
+                img,
                 src: img.src,
                 width: img.naturalWidth,
                 height: img.naturalHeight,
@@ -42,7 +61,8 @@ function _resolveImageData(imageList) {
         } else {
             img.onload = () => {
                 resolve();
-                imgData.push({
+                this.originalImages.push({
+                    img,
                     src: img.src,
                     width: img.naturalWidth,
                     height: img.naturalHeight,
@@ -50,9 +70,10 @@ function _resolveImageData(imageList) {
                 });
             };
             img.onerror = () => {
-                img.classList.add('crop-tag-error');
+                img.classList.add(CROPTAG_ERROR);
                 resolve();
-                imgData.push({
+                this.originalImages.push({
+                    img,
                     src: img.src,
                     width: img.naturalWidth,
                     height: img.naturalHeight,
@@ -60,7 +81,7 @@ function _resolveImageData(imageList) {
                 });
             }
         }
-    }))).then(() => imgData);
+    }))).then(() => this.originalImages);
 }
 
 function _createMask(image, imageAlt, target) {
@@ -90,7 +111,87 @@ function _createMask(image, imageAlt, target) {
         }
     }
     _wrapAndMask(imageList);
-    _resolveImageData(imageList).then((imageData) => console.log(imageData));
+    return imageList;
+}
+
+function _validateSchema(dots, defaultDots) {
+    let isValid = true;
+    Object.keys(dots).forEach(dot => {
+        if (!(dot in defaultDots)) {
+            isValid = false;
+        }
+    });
+    if (!isValid) {
+        throw new Error(`Input dots does not match current schema. Accepted values are ${Object.keys(defaultDots).join(', ')}`);
+    }
+    return isValid;
+}
+
+function _insertSquare({ e, dots, edges, drag, defaultDots }) {
+    const rect = this.getBoundingClientRect();
+    const left = e.clientX - rect.left;
+    const top = e.clientY - rect.top;
+    const square = _createElement('div', {
+        class: `${CROPTAG_TAG}${drag ? ` ${CROPTAG_TAG}--drag` : ''}`,
+        style: `position: absolute; top: ${top}px; left: ${left}px;`
+    });
+    if (dots) {
+        let availableDots = defaultDots;
+        if (typeof dots === 'object' && _validateSchema(dots, defaultDots)) {
+            availableDots = dots;
+        }
+        Object.keys(availableDots).forEach(dot => {
+            square.appendChild(_createElement('div', {
+                class: `${CROPTAG_DOT} ${CROPTAG_DOT}--${availableDots[dot]}`
+            }));
+        });
+    }
+    if (edges && drag) {
+        ['top', 'left', 'bottom', 'right'].forEach(edge => {
+            square.appendChild(_createElement('div', {
+                class: `${CROPTAG_EDGE} ${CROPTAG_EDGE}--drag ${CROPTAG_EDGE}--${edge}`
+            }));
+        });
+    }
+    this.appendChild(square);
+    return square;
+}
+
+function _bindEvents() {
+    const { dots, edges, drag } = this.config;
+    const { defaultDots } = this;
+    document.body.addEventListener(MOUSE_DOWN, (e) => {
+        let currentTarget = e.target;
+        if (edges && currentTarget.classList.contains(CROPTAG_TAG)) {
+            currentTarget = currentTarget.parentNode;
+        }
+        if (currentTarget.classList.contains(CROPTAG_MASK)) {
+            const square = _insertSquare.apply(currentTarget, [{ e, dots, edges, drag, defaultDots }]);
+            const x1 = e.clientX;
+            const y1 = e.clientY;
+            const initialLeft = square.style.left;
+            const initialTop = square.style.top;
+            this.drawHandler = function (e) {
+                const x2 = e.clientX;
+                const y2 = e.clientY;
+                const width = x2 - x1;
+                const height = y2 - y1;
+                square.style.width = `${Math.abs(width)}px`;
+                square.style.height = `${Math.abs(height)}px`;
+                if (width < 0) {
+                    square.style.left = `${parseFloat(initialLeft) + width}px`;
+                }
+                if (height < 0) {
+                    square.style.top = `${parseFloat(initialTop) + height}px`
+                }
+            }
+            document.body.addEventListener(MOUSE_MOVE, this.drawHandler);
+        }
+    });
+    document.body.addEventListener(MOUSE_UP, () => {
+        document.body.removeEventListener(MOUSE_MOVE, this.drawHandler);
+        this.drawHandler = null;
+    });
 }
 
 export default class CropTag {
@@ -103,26 +204,39 @@ export default class CropTag {
             focussedTags: false, // Enables focus and blur effect to get details of only focussed tag
             image: null, // Image URL or reference
             imageAlt: null,
-            target: null, // Image target to be used if image URL is passed
-            onDragStart: null, // Callback fires when dragging starts
-            onDrag: null, // Callback fires during drag
-            onDrapStop: null, // Callback fires when dragging stops
-            onResize: null // Callback fires when tag is resized
+            target: null // Image target to be used if image URL is passed
         }, config);
         // Mask image
         const { image, imageAlt, target } = this.config;
-        _createMask(image, imageAlt, target);
+        _resolveImageData.apply(this, [_createMask(image, imageAlt, target)]).then((imageData) => {
+            const onReady = new CustomEvent(CROPTAG_READY, {
+                bubbles: true,
+                cancelable: true,
+                detail: {
+                    payload: imageData
+                }
+            });
+            imageData.forEach(({ img }) => {
+                img.dispatchEvent(onReady);
+            });
+            _bindEvents.apply(this);
+        });
     }
+    originalImages = [];
+    defaultDots = {
+        TL: 'top-left',
+        T: 'top',
+        TR: 'top-right',
+        R: 'right',
+        BR: 'bottom-right',
+        B: 'bottom',
+        BL: 'bottom-left',
+        L: 'left'
+    };
     getAll() {
         // TODO: Returns all tags
     }
     get(index) {
         //TODO: Returns focussed tag if focussedTags is enabled, else returns tag info based on created index
-    }
-    on(event, handler) {
-        //TODO: Event handler to be used for onDragStart, onDrag, onDrapStop and onResize
-    }
-    off(event, handler) {
-        //TODO: Removes event handlers
     }
 }
