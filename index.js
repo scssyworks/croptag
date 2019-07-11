@@ -177,8 +177,10 @@ function _bindEvents() {
                 const y2 = e.clientY;
                 const width = x2 - x1;
                 const height = y2 - y1;
-                const maxAttainableWidth = ctRect.width - parseFloat(square.style.left);
-                const maxAttainableHeight = ctRect.height - parseFloat(square.style.top);
+                const sqRect = square.getBoundingClientRect();
+                const maxAttainableWidth = ctRect.width - sqRect.left;
+                const maxAttainableHeight = ctRect.height - sqRect.top;
+                console.log(maxAttainableWidth, maxAttainableHeight);
                 square.style.width = `${(Math.abs((width < maxAttainableWidth ? width : maxAttainableWidth))) / ctRect.width * 100}%`;
                 square.style.height = `${(Math.abs((height < maxAttainableHeight ? height : maxAttainableHeight))) / ctRect.height * 100}%`;
                 const computedLeft = (parseFloat(initialLeft) + width) / ctRect.width * 100;
