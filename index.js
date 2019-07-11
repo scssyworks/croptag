@@ -160,7 +160,7 @@ function _insertSquare({ e, dots, edges, drag, defaultDots }) {
 function _bindEvents() {
     const { dots, edges, drag } = this.config;
     const { defaultDots } = this;
-    document.body.addEventListener(MOUSE_DOWN, (e) => {
+    document.addEventListener(MOUSE_DOWN, (e) => {
         let currentTarget = e.target;
         if (edges && currentTarget.classList.contains(CROPTAG_TAG)) {
             currentTarget = currentTarget.parentNode;
@@ -171,25 +171,32 @@ function _bindEvents() {
             const y1 = e.clientY;
             const initialLeft = square.style.left;
             const initialTop = square.style.top;
+            const ctRect = currentTarget.getBoundingClientRect();
             this.drawHandler = function (e) {
                 const x2 = e.clientX;
                 const y2 = e.clientY;
                 const width = x2 - x1;
                 const height = y2 - y1;
-                square.style.width = `${Math.abs(width)}px`;
-                square.style.height = `${Math.abs(height)}px`;
+                const maxAttainableWidth = ctRect.width - parseFloat(square.style.left);
+                const maxAttainableHeight = ctRect.height - parseFloat(square.style.top);
+                square.style.width = `${Math.abs((width < maxAttainableWidth ? width : maxAttainableWidth))}px`;
+                square.style.height = `${Math.abs((height < maxAttainableHeight ? height : maxAttainableHeight))}px`;
+                const computedLeft = parseFloat(initialLeft) + width;
+                const computedTop = parseFloat(initialTop) + height;
+                const effectiveLeft = computedLeft > 0 ? computedLeft : 0;
+                const effectiveTop = computedTop > 0 ? computedTop : 0;
                 if (width < 0) {
-                    square.style.left = `${parseFloat(initialLeft) + width}px`;
+                    square.style.left = `${effectiveLeft}px`;
                 }
                 if (height < 0) {
-                    square.style.top = `${parseFloat(initialTop) + height}px`
+                    square.style.top = `${effectiveTop}px`
                 }
             }
-            document.body.addEventListener(MOUSE_MOVE, this.drawHandler);
+            document.addEventListener(MOUSE_MOVE, this.drawHandler);
         }
     });
-    document.body.addEventListener(MOUSE_UP, () => {
-        document.body.removeEventListener(MOUSE_MOVE, this.drawHandler);
+    document.addEventListener(MOUSE_UP, () => {
+        document.removeEventListener(MOUSE_MOVE, this.drawHandler);
         this.drawHandler = null;
     });
 }

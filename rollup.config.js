@@ -5,14 +5,12 @@ export default [{
     input: 'index.js',
     output: {
         file: "dist/index.js",
-        sourcemap: true,
         format: "umd",
         name: "CropTag"
     },
     plugins: [
         babel({
             exclude: 'node_modules/**'
-        }),
-        terser()
+        })
     ]
 }]
