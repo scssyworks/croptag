@@ -179,17 +179,17 @@ function _bindEvents() {
                 const height = y2 - y1;
                 const maxAttainableWidth = ctRect.width - parseFloat(square.style.left);
                 const maxAttainableHeight = ctRect.height - parseFloat(square.style.top);
-                square.style.width = `${Math.abs((width < maxAttainableWidth ? width : maxAttainableWidth))}px`;
-                square.style.height = `${Math.abs((height < maxAttainableHeight ? height : maxAttainableHeight))}px`;
-                const computedLeft = parseFloat(initialLeft) + width;
-                const computedTop = parseFloat(initialTop) + height;
+                square.style.width = `${(Math.abs((width < maxAttainableWidth ? width : maxAttainableWidth))) / ctRect.width * 100}%`;
+                square.style.height = `${(Math.abs((height < maxAttainableHeight ? height : maxAttainableHeight))) / ctRect.height * 100}%`;
+                const computedLeft = (parseFloat(initialLeft) + width) / ctRect.width * 100;
+                const computedTop = (parseFloat(initialTop) + height) / ctRect.height * 100;
                 const effectiveLeft = computedLeft > 0 ? computedLeft : 0;
                 const effectiveTop = computedTop > 0 ? computedTop : 0;
                 if (width < 0) {
-                    square.style.left = `${effectiveLeft}px`;
+                    square.style.left = `${effectiveLeft}%`;
                 }
                 if (height < 0) {
-                    square.style.top = `${effectiveTop}px`
+                    square.style.top = `${effectiveTop}%`
                 }
             }
             document.addEventListener(MOUSE_MOVE, this.drawHandler);

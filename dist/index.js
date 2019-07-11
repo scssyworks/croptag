@@ -313,19 +313,19 @@
           var height = y2 - y1;
           var maxAttainableWidth = ctRect.width - parseFloat(square.style.left);
           var maxAttainableHeight = ctRect.height - parseFloat(square.style.top);
-          square.style.width = "".concat(Math.abs(width < maxAttainableWidth ? width : maxAttainableWidth), "px");
-          square.style.height = "".concat(Math.abs(height < maxAttainableHeight ? height : maxAttainableHeight), "px");
-          var computedLeft = parseFloat(initialLeft) + width;
-          var computedTop = parseFloat(initialTop) + height;
+          square.style.width = "".concat(Math.abs(width < maxAttainableWidth ? width : maxAttainableWidth) / ctRect.width * 100, "%");
+          square.style.height = "".concat(Math.abs(height < maxAttainableHeight ? height : maxAttainableHeight) / ctRect.height * 100, "%");
+          var computedLeft = (parseFloat(initialLeft) + width) / ctRect.width * 100;
+          var computedTop = (parseFloat(initialTop) + height) / ctRect.height * 100;
           var effectiveLeft = computedLeft > 0 ? computedLeft : 0;
           var effectiveTop = computedTop > 0 ? computedTop : 0;
 
           if (width < 0) {
-            square.style.left = "".concat(effectiveLeft, "px");
+            square.style.left = "".concat(effectiveLeft, "%");
           }
 
           if (height < 0) {
-            square.style.top = "".concat(effectiveTop, "px");
+            square.style.top = "".concat(effectiveTop, "%");
           }
         };
 
